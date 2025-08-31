@@ -1,0 +1,148 @@
+<div class="timesheet-container">
+  <div class="header-section">
+    <h1 class="title">Smart Student TimeSheet</h1>
+    <p class="subtitle">Enter your Student ID to view your class schedule</p>
+  </div>
+
+  <div class="search-section">
+    <div class="input-group">
+      <input 
+        type="text" 
+        [(ngModel)]="studentId" 
+        placeholder="Enter Student ID (e.g., 12345, 67890)"
+        class="student-input"
+        [disabled]="loading"
+        (keydown)="onEnterKeyPress($event)"
+        maxlength="10">
+      
+      <button 
+        (click)="onLoadTimesheet()" 
+        class="load-btn"
+        [disabled]="loading || !studentId.trim()">
+        {{ loading ? 'Loading...' : 'Load Schedule' }}
+      </button>
+      
+      <button 
+        (click)="onClearTimesheet()" 
+        class="clear-btn"
+        [disabled]="loading"
+        *ngIf="timesheet">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-section">
+    <div class="spinner"></div>
+    <p>Loading your schedule...</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="error-section">
+    <div class="error-message">
+      <i class="error-icon">⚠️</i>
+      <span>{{ error }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="timesheet && !loading && !error" class="timesheet-content">
+    
+    <div class="student-info">
+      <h2>{{ timesheet.student.name || 'Unknown Student' }}'s Schedule</h2>
+      <div class="student-details">
+        <span class="student-id">ID: {{ timesheet.student.id || 'N/A' }}</span>
+        <span class="student-email" *ngIf="timesheet.student?.email">{{ timesheet.student.email }}</span>
+        <span class="student-department" *ngIf="timesheet.student?.department">{{ timesheet.student.department }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="currentClass" class="current-class-alert">
+      <div class="alert-content">
+        <i class="alert-icon">🔔</i>
+        <div class="alert-text">
+          <strong>Current Class:</strong> {{ currentClass.className }}
+          <br>
+          <small>{{ getTimeRange(currentClass.startTime, currentClass.endTime) }} in {{ currentClass.room || 'TBD' }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="schedule-table-container">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Instructor</th>
+            <th>Room</th>
+            <th>Credits</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let class of timesheet.classes; trackBy: trackByClassId" 
+              [class]="getRowCssClass(class)">
+            
+            <td class="class-name">
+              <div class="class-info">
+                <strong>{{ class.className || 'Unknown Class' }}</strong>
+                <small class="class-id">ID: {{ class.id || 'N/A' }}</small>
+              </div>
+            </td>
+            
+            <td class="class-day">{{ class.day || 'TBD' }}</td>
+            
+            <td class="class-time">
+              <div class="time-info">
+                {{ getTimeRange(class.startTime || '00:00', class.endTime || '00:00') }}
+                <small class="duration">
+                  ({{ getDuration(class.startTime || '00:00', class.endTime || '00:00') }})
+                </small>
+              </div>
+            </td>
+            
+            <td class="class-instructor">{{ class.instructor || 'TBD' }}</td>
+            
+            <td class="class-room">{{ class.room || 'TBD' }}</td>
+            
+            <td class="class-credits">{{ class.credits || '-' }}</td>
+            
+            <td class="class-status">
+              <span class="status-badge" [class]="'status-' + getClassStatus(class).toLowerCase()">
+                {{ getClassStatus(class) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="schedule-summary">
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ timesheet.classes.length }}</span>
+          <span class="stat-label">Total Classes</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getTotalCredits() }}</span>
+          <span class="stat-label">Total Credits</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getTodayClassesCount() }}</span>
+          <span class="stat-label">Today's Classes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!timesheet && !loading && !error" class="empty-state">
+    <div class="empty-content">
+      <i class="empty-icon">📅</i>
+      <h3>Welcome to Smart TimeSheet</h3>
+      <p>Enter your Student ID above to view your class schedule</p>
+      <div class="sample-ids">
+        <small>Try sample IDs: <code>12345</code> or <code>67890</code></small>
+      </div>
+    </div>
+  </div>
+</div>
